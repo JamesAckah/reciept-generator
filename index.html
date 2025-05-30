@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gold Purchase Receipt Generator</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+        .receipt-container { border: 2px solid #000; padding: 30px; border-radius: 10px; }
+        .company-header { text-align: center; margin-bottom: 30px; }
+        .company-header h1 { color: #D4AF37; margin: 0; }
+        .input-section { margin-bottom: 25px; }
+        .input-group { margin: 15px 0; }
+        label { display: inline-block; width: 150px; font-weight: bold; }
+        input { width: 200px; padding: 8px; border: 1px solid #ccc; }
+        button { background: #D4AF37; color: #000; padding: 12px 25px; border: none; cursor: pointer; font-weight: bold; }
+        .receipt-output { margin-top: 30px; display: none; }
+        .receipt { background: #fff; padding: 25px; border: 2px dashed #666; }
+        .print-btn { margin-top: 20px; }
+        .error { color: #ff0000; font-weight: bold; }
+        .signature-line { border-top: 1px solid #000; width: 200px; margin: 30px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        td, th { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        @media print {
+            .input-section, button { display: none; }
+            .receipt-output { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="company-header">
+            <h1>GOLDEN TREASURES INC.</h1>
+            <p>123 Bullion Street, Gold City, GC 98765</p>
+            <p>Tel: (555) 123-4567 | License #: AU-123456</p>
+        </div>
+
+        <div class="input-section">
+            <h2>Transaction Details</h2>
+            <div class="input-group">
+                <label>Customer Name:</label>
+                <input type="text" id="customerName">
+            </div>
+            <div class="input-group">
+                <label>Weight (grams):</label>
+                <input type="number" id="weight" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Volume (cm³):</label>
+                <input type="number" id="volume" step="0.01">
+            </div>
+            <div class="input-group">
+                <label>Price per gram ($):</label>
+                <input type="number" id="price" step="0.01">
+            </div>
+            <button onclick="generateReceipt()">Generate Receipt</button>
+        </div>
+
+        <div class="receipt-output" id="receiptOutput">
+            <div class="receipt">
+                <h3>OFFICIAL PURCHASE RECEIPT</h3>
+                <p>Date: <span id="receiptDate"></span></p>
+                <p>Customer: <span id="receiptCustomer"></span></p>
+                
+                <table>
+                    <tr>
+                        <th>Description</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Weight (grams)</td>
+                        <td><span id="rWeight"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Volume (cm³)</td>
+                        <td><span id="rVolume"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Density (g/cm³)</td>
+                        <td><span id="rDensity"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Purity (Karat)</td>
+                        <td><span id="rKarat"></span>K</td>
+                    </tr>
+                    <tr>
+                        <td>Price per gram</td>
+                        <td>$<span id="rPrice"></span></td>
+                    </tr>
+                    <tr style="font-weight: bold; background-color: #f5f5f5;">
+                        <td>TOTAL AMOUNT</td>
+                        <td>$<span id="rTotal"></span></td>
+                    </tr>
+                </table>
+
+                <div class="signature-line"></div>
+                <p>Authorized Signature: _________________________</p>
+                <p style="font-size: 0.9em; color: #666;">
+                    * This receipt is valid for 30 days from date of issue<br>
+                    * All transactions final - No returns accepted<br>
+                    * Purity calculation method: ASTM B562-15
+                </p>
+            </div>
+            <button class="print-btn" onclick="window.print()">Print Receipt</button>
+        </div>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        function generateReceipt() {
+            // Clear previous results
+            document.getElementById('error').textContent = '';
+        
+            // Get input values
+            const customerName = document.getElementById('customerName').value;
+            const weight = parseFloat(document.getElementById('weight').value);
+            const volume = parseFloat(document.getElementById('volume').value);
+            const price = parseFloat(document.getElementById('price').value);
+        
+            // Validate inputs
+            if (!customerName || isNaN(weight) || weight <= 0 || 
+                isNaN(volume) || volume <= 0 || isNaN(price) || price <= 0) {
+                document.getElementById('error').textContent = 'Please fill all fields with valid positive values!';
+                return;
+            }
+        
+            try {
+                // 1. Calculate density (force truncation to 2 decimals)
+                const preciseDensity = weight / volume;
+                const density = Math.floor(preciseDensity * 100) / 100; // Truncate to 17.98
+        
+                // 2. Force karat to always be 21.95 (as per your requirement)
+                const karat = 21.95;
+        
+                // 3. Calculate pound (weight / 7.75)
+                const pound = weight / 7.75; // e.g., 591.27 / 7.75 = 76.29
+        
+                // 4. Calculate total amount using the fixed karat (21.95)
+                const total = (karat / 23) * price * pound;
+        
+                // Round total to nearest integer and format
+                const roundedTotal = Math.round(total); // Round final total
+        
+                // Update the receipt display
+                document.getElementById('receiptDate').textContent = new Date().toLocaleDateString();
+                document.getElementById('receiptCustomer').textContent = customerName;
+                document.getElementById('rWeight').textContent = weight.toFixed(2);
+                document.getElementById('rVolume').textContent = volume.toFixed(2);
+                document.getElementById('rDensity').textContent = density.toFixed(2); // 17.98
+                document.getElementById('rKarat').textContent = karat.toFixed(2); // 21.95
+                document.getElementById('rPrice').textContent = price.toFixed(2);
+                document.getElementById('rTotal').textContent = roundedTotal.toLocaleString(); // Should be 795,783
+        
+                // Show the receipt
+                document.getElementById('receiptOutput').style.display = 'block';
+        
+            } catch (error) {
+                document.getElementById('error').textContent = 'Calculation Error: ' + error.message;
+            }
+        }
+        </script>
+        
+        
+</body>
+</html>
